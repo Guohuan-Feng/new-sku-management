@@ -25,6 +25,56 @@ const SKUList = ({ skus, onEdit, onDelete }) => {
       key: 'gMax',
     },
     {
+      title: '包装类型',
+      dataIndex: 'packageType',
+      key: 'packageType',
+    },
+    {
+      title: '容量',
+      dataIndex: 'capacity',
+      key: 'capacity',
+    },
+    {
+      title: '容量单位',
+      dataIndex: 'capacityUnit',
+      key: 'capacityUnit',
+    },
+    {
+      title: '产品代码',
+      dataIndex: 'code',
+      key: 'code',
+    },
+    {
+      title: '库存下限',
+      dataIndex: 'gMin',
+      key: 'gMin',
+    },
+    {
+      title: '单件毛重 (KG)',
+      dataIndex: 'gw',
+      key: 'gw',
+    },
+    {
+      title: '包装高 (CM)',
+      dataIndex: 'height',
+      key: 'height',
+    },
+    {
+      title: '包装长 (CM)',
+      dataIndex: 'length',
+      key: 'length',
+    },
+    {
+      title: '单件体积 (CBM 立方米)',
+      dataIndex: 'vol',
+      key: 'vol',
+    },
+    {
+      title: '包装宽 (CM)',
+      dataIndex: 'width',
+      key: 'width',
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_, record) => (
