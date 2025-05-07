@@ -1,11 +1,12 @@
 import React from 'react';
 import { Modal } from 'antd';
 
-const ConfirmDialog = ({ visible, onConfirm, onCancel }) => {
+// 为了适配 antd v5+，将属性名从 'visible' 改为 'open'
+const ConfirmDialog = ({ open, onConfirm, onCancel }) => {
   return (
     <Modal
       title="确认删除"
-      visible={visible}
+      open={open} // 使用 'open' 属性
       onOk={onConfirm}
       onCancel={onCancel}
       okText="确认"
@@ -16,4 +17,4 @@ const ConfirmDialog = ({ visible, onConfirm, onCancel }) => {
   );
 };
 
-export default ConfirmDialog; 
+export default ConfirmDialog;
