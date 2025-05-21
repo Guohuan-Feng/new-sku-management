@@ -9,8 +9,8 @@ import ConfirmDialog from '../components/ConfirmDialog';
 
 // 辅助函数：用于解析并格式化错误信息 (保持之前的健壮版本)
 const formatErrorMessage = (error) => {
-  console.log("Formatting error:", error); // 新增日志，查看传入的error对象
-  if (error.response) { // 首先确保 error.response 存在
+  console.log("Formatting error:", error);
+  if (error.response) {
     if (error.response.data?.detail) {
       if (Array.isArray(error.response.data.detail)) {
         return error.response.data.detail.map(err => {
@@ -27,7 +27,6 @@ const formatErrorMessage = (error) => {
       }
       return msg;
     }
-    // 如果 response 中有其他可读的错误信息
     if (error.response.data && typeof error.response.data === 'string') {
         return error.response.data;
     }
@@ -36,24 +35,18 @@ const formatErrorMessage = (error) => {
     }
   }
   if (error.message) {
-    return error.message; // 网络错误或其他客户端错误
+    return error.message;
   }
   return '发生未知错误，请检查控制台获取更多信息。';
 };
 
-// 显示通知的辅助函数
 const showNotification = (type, title, content) => {
-  console.log(`显示通知: ${type}, ${title}, ${content}`); // 添加调试日志
-  
-  // 使用notification API
   notification[type]({
     message: title,
     description: content,
     placement: 'topRight',
     duration: 4.5,
   });
-  
-  // 同时使用message API作为备选
   if (type === 'success') {
     message.success(`${title}: ${content}`);
   } else if (type === 'error') {
@@ -63,8 +56,64 @@ const showNotification = (type, title, content) => {
   }
 };
 
+// 示例SKU数据
+const sampleSkusData = [
+  {
+    id: 'sample-1',
+    sku: 'SKU001',
+    name: '产品A (示例)',
+    goodsValue: 120.50,
+    gMax: 1000,
+    packageType: '标准箱',
+    capacity: 500,
+    capacityUnit: 'ml',
+    code: 'PCODE001',
+    gMin: 50,
+    gw: 1.2,
+    height: 20,
+    length: 30,
+    vol: 0.018,
+    width: 15,
+  },
+  {
+    id: 'sample-2',
+    sku: 'SKU002',
+    name: '产品B (超长名称示例用于测试换行和显示效果)',
+    goodsValue: 75.00,
+    gMax: 500,
+    packageType: '独立包装',
+    capacity: 2,
+    capacityUnit: 'L',
+    code: 'PCODE002',
+    gMin: 20,
+    gw: 2.5,
+    height: 25,
+    length: 40,
+    vol: 0.03,
+    width: 30,
+  },
+  {
+    id: 'sample-3',
+    sku: 'SKU003',
+    name: '产品C (部分字段为空)',
+    goodsValue: 210.75,
+    gMax: null, // 示例空值
+    packageType: '袋装',
+    capacity: 750,
+    capacityUnit: 'g',
+    code: '', // 示例空字符串
+    gMin: 10,
+    gw: 0.8,
+    height: 15,
+    length: 20,
+    vol: 0.009,
+    width: 10,
+  },
+];
+
+
 const SKUPage = () => {
-  const [skus, setSkus] = useState([]);
+  const [skus, setSkus] = useState([]); // 初始化为空数组
   const [editingSku, setEditingSku] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -76,6 +125,14 @@ const SKUPage = () => {
 
   const loadData = async () => {
     console.log("Attempting to load data...");
+    // ** START: 修改为使用示例数据 **
+    // 为了演示，我们直接设置示例数据
+    // 在实际应用中，您应该移除这行，并取消下方API调用的注释
+    setSkus(sampleSkusData); 
+    console.log("Loaded sample SKU data for display.");
+
+    // 实际API调用 (当前被注释掉)
+    /*
     try {
       const response = await getAllSkus();
       console.log("Load data response:", response);
@@ -83,8 +140,10 @@ const SKUPage = () => {
     } catch (error) {
       console.error('加载 SKU 数据失败 (捕获于 loadData):', error.response || error.request || error.message);
       showNotification('error', '加载数据失败', formatErrorMessage(error));
-      setSkus([]);
+      setSkus([]); // 确保出错时 skus 仍为数组
     }
+    */
+    // ** END: 修改为使用示例数据 **
   };
 
   useEffect(() => {
@@ -93,97 +152,54 @@ const SKUPage = () => {
 
   const handleSave = async (formData) => {
     console.log('[handleSave] Initiated with formData:', formData);
+    // 暂时禁用保存逻辑，因为我们在使用示例数据
+    showNotification('info', '操作提示', '当前为示例数据显示，保存功能未执行。');
+    setIsModalOpen(false);
+    setEditingSku(null);
+    // 如果需要，可以在这里重新加载示例数据或API数据
+    // loadData(); 
+    return; 
+
+    // 以下是原始保存逻辑
+    /*
     try {
       if (editingSku) {
-        console.log('[handleSave] Attempting to update SKU ID:', editingSku.id);
-        const updateResponse = await updateSku(editingSku.id, formData);
-        console.log('[handleSave] Update SKU response:', updateResponse);
-
-        // 更新成功通知
-        if (updateResponse && (updateResponse.status === 200 || updateResponse.status === 204)) {
-          showNotification(
-            'success',
-            'SKU更新成功',
-            updateResponse.data?.message || 'SKU数据已成功更新'
-          );
-        } else {
-          console.warn('[handleSave] Update SKU response was 2xx but not as expected:', updateResponse);
-          showNotification(
-            'warning',
-            '更新操作存疑',
-            `更新请求已发送，但服务器响应状态为 ${updateResponse?.status}。消息: ${updateResponse?.data?.message || '无具体消息。'}`
-          );
-        }
+        // ... (省略更新逻辑)
       } else {
-        console.log('[handleSave] Attempting to create SKU.');
-        const createResponse = await createSku(formData);
-        console.log('[handleSave] Create SKU response:', createResponse);
-
-        // 创建成功通知
-        if (createResponse && createResponse.status === 201) {
-          console.log('显示成功通知'); // 添加调试日志
-          showNotification(
-            'success',
-            'SKU创建成功',
-            createResponse.data?.message || 'SKU数据已成功创建'
-          );
-        } else {
-          console.warn('[handleSave] Create SKU response was 2xx but not 201 or not as expected:', createResponse);
-          showNotification(
-            'warning',
-            '创建操作存疑',
-            `创建请求已发送，但服务器响应状态为 ${createResponse?.status}。消息: ${createResponse?.data?.message || '无具体消息。'}`
-          );
-        }
+        // ... (省略创建逻辑)
       }
       setIsModalOpen(false);
       setEditingSku(null);
-      loadData(); // 重新加载数据
+      loadData(); 
     } catch (err) {
-      // 处理API调用失败（例如400, 500错误，或网络问题）
-      console.error('[handleSave] Operation failed (caught in catch block):', err.response || err.request || err.message);
-      
-      // 检测是否为重复SKU错误
-      let errorMessage = formatErrorMessage(err);
-      let title = '保存操作失败';
-      
-      if (errorMessage.includes('SKU已存在') || errorMessage.includes('duplicate') || 
-          errorMessage.includes('重复') || errorMessage.toLowerCase().includes('already exists') ||
-          (err.response && err.response.data && err.response.data.detail && 
-           err.response.data.detail.includes('SKU 编码已存在'))) {
-        title = 'SKU重复错误';
-        errorMessage = `${formData.sku} 已存在，请使用其他SKU编码`;
-      }
-      
-      console.log(`即将显示错误通知: ${title}, ${errorMessage}`); // 添加调试日志
-      
-      // 使用多种方式确保错误信息一定能显示
-      // 1. 使用 alert (最基础的浏览器弹窗)
-      window.alert(`${title}: ${errorMessage}`);
-      
-      // 2. 使用 Modal.error
-      Modal.error({
-        title: title,
-        content: errorMessage,
-      });
-      
-      // 3. 使用通知函数
-      showNotification('error', title, errorMessage);
+      // ... (省略错误处理)
     }
+    */
   };
 
   const handleEdit = (sku) => {
+     // 如果是示例数据，我们可能没有完整的后端ID
+    console.log("Editing SKU (sample data):", sku);
     setEditingSku(sku);
     setIsModalOpen(true);
   };
 
   const handleDelete = (id) => {
-    setSkuToDelete(id);
-    setIsConfirmOpen(true);
+    console.log("Attempting to delete SKU ID (sample data):", id);
+    // 暂时禁用删除逻辑
+    showNotification('info', '操作提示', `当前为示例数据显示，删除功能未执行 (ID: ${id})。`);
+    // setSkuToDelete(id);
+    // setIsConfirmOpen(true);
   };
+
 
   const confirmDelete = async () => {
     console.log('[confirmDelete] Attempting to delete SKU ID:', skuToDelete);
+    // 暂时禁用
+    setIsConfirmOpen(false);
+    setSkuToDelete(null);
+    return;
+    /*
     if (skuToDelete) {
       try {
         await deleteSku(skuToDelete);
@@ -196,6 +212,7 @@ const SKUPage = () => {
     }
     setIsConfirmOpen(false);
     setSkuToDelete(null);
+    */
   };
 
   const cancelDelete = () => {
@@ -223,45 +240,18 @@ const SKUPage = () => {
       showNotification('warning', '提示', '请先选择一个 CSV 文件！');
       return;
     }
-
+    // 暂时禁用上传逻辑
     setUploading(true);
-    console.log('[handleConfirmUpload] Attempting to upload file:', selectedFile.name);
-    try {
-      const response = await uploadSkus(selectedFile);
-      console.log('[handleConfirmUpload] Upload response:', response);
-      setUploading(false);
-
-      if (response.data.failure_count > 0) {
-        const failureDetails = response.data.failures.map(f =>
-          `行 ${f.row}: ${f.error} (涉及数据: ${JSON.stringify(f.data).substring(0, 100)}${JSON.stringify(f.data).length > 100 ? '...' : ''})`
-        ).join('\n');
-
-        Modal.warning({
-          title: '上传部分成功',
-          width: 700,
-          content: (
-            <div>
-              <p>{`成功上传: ${response.data.success_count}条, 失败: ${response.data.failure_count}条.`}</p>
-              <p>失败详情 (部分):</p>
-              <pre style={{ maxHeight: '200px', overflowY: 'auto', background: '#f5f5f5', padding: '10px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {failureDetails}
-              </pre>
-              <p>详细错误原因及数据请查看控制台。</p>
-            </div>
-          ),
-          onOk() { console.warn('[handleConfirmUpload] Full upload failure details:', response.data.failures); }
-        });
-      } else {
-        showNotification('success', '上传成功', `成功上传: ${response.data.success_count}条数据`);
-      }
-
-      setSelectedFile(null);
-      loadData();
-    } catch (err) {
-      setUploading(false);
-      console.error('[handleConfirmUpload] Upload failed (caught in catch block):', err.response || err.request || err.message);
-      showNotification('error', '上传失败', formatErrorMessage(err));
-    }
+    showNotification('info', '操作提示', '当前为示例数据显示，上传功能未执行。');
+    setTimeout(() => {
+        setUploading(false);
+        setSelectedFile(null);
+    }, 1500);
+    return;
+    /*
+    setUploading(true);
+    // ... (省略上传逻辑)
+    */
   };
 
   const filteredSkus = skus.filter(sku =>
@@ -276,8 +266,8 @@ const SKUPage = () => {
         padding: 24,
         borderRadius: 8,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        minWidth: 720,
-        maxWidth: 1200,
+        minWidth: 720, // 确保有足够宽度展示
+        maxWidth: '90%', // 允许更宽的视图
         margin: '40px auto',
       }}>
       <Space style={{ marginBottom: 16, width: '100%', display: 'flex', justifyContent: 'space-between' }} wrap>
@@ -346,7 +336,7 @@ const SKUPage = () => {
           setIsModalOpen(false);
           setEditingSku(null);
         }}
-        onSubmit={handleSave} // 确保这里是 onSubmit={handleSave}
+        onSubmit={handleSave}
         initialValues={editingSku}
       />
 
