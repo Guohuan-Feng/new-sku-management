@@ -1,351 +1,201 @@
-import React, { useEffect, useState } from 'react';
-import { Button, message, Input, Space, Upload, Tooltip, Modal } from 'antd';
-import { notification } from 'antd';
-import { UploadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import SKUList from '../components/SKUList';
-import SKUForm from '../components/SKUForm';
-import { getAllSkus, createSku, updateSku, deleteSku, uploadSkus } from '../api/sku';
-import ConfirmDialog from '../components/ConfirmDialog';
+import React, { useState, useEffect } from 'react';
+// 确保 SKUFormComponent 和 SKUList 的导入路径与您的项目结构一致
+import SKUFormComponent from '../components/SKUForm'; // 这是 SKUForm.jsx 导出的组件
+import SKUList from '../components/SKUList'; // 您的 SKUList 组件
 
-// 辅助函数：用于解析并格式化错误信息 (保持之前的健壮版本)
-const formatErrorMessage = (error) => {
-  console.log("Formatting error:", error);
-  if (error.response) {
-    if (error.response.data?.detail) {
-      if (Array.isArray(error.response.data.detail)) {
-        return error.response.data.detail.map(err => {
-          const field = err.loc && err.loc.length > 1 ? err.loc.slice(-1).join('.') : (err.loc ? err.loc.join('.') : 'N/A');
-          return `字段 '${field}': ${err.msg}`;
-        }).join('\n');
-      }
-      return String(error.response.data.detail);
-    }
-    if (error.response.data?.error) {
-      let msg = String(error.response.data.error);
-      if (error.response.data.missing_columns) {
-        msg += ` (缺少列: ${error.response.data.missing_columns.join(', ')})`;
-      }
-      return msg;
-    }
-    if (error.response.data && typeof error.response.data === 'string') {
-        return error.response.data;
-    }
-    if (error.response.statusText && error.response.statusText !== "") {
-        return `请求失败: ${error.response.status} ${error.response.statusText}`;
-    }
-  }
-  if (error.message) {
-    return error.message;
-  }
-  return '发生未知错误，请检查控制台获取更多信息。';
+// 确保 API 函数的导入路径与您的项目结构一致
+// 以下为临时模拟 API，请将其替换为您项目中真实的 API 调用
+const fetchSKUs = async () => {
+  console.log('MOCK API: fetchSKUs called');
+  await new Promise(resolve => setTimeout(resolve, 300)); // 模拟 API 延迟
+  // 返回三条硬编码数据用于默认显示
+  return Promise.resolve([
+    { _id: 'sku123', vendor_sku: 'HD-SKU-001', product_name: 'Hardcoded Product Alpha (已加载)', status: '1', category: 'Electronics', dropship_price: '99.99', ats: 10, upc: '123456789012', allow_dropship_return: true, shipping_lead_time: 3, country_of_origin: 'China', title: 'Alpha Product', short_desc: 'This is Alpha', long_desc: 'This is a detailed description for Alpha.', keywords: 'alpha,test,product', key_features_1: 'Feature A1', key_features_2: 'Feature A2', key_features_3: 'Feature A3', key_features_4: 'Feature A4', key_features_5: 'Feature A5', main_image:'https://via.placeholder.com/150', front_image:'https://via.placeholder.com/150', back_image:'https://via.placeholder.com/150', side_image:'https://via.placeholder.com/150', detail_image:'https://via.placeholder.com/150', full_image:'https://via.placeholder.com/150', thumbnail_image:'https://via.placeholder.com/150', size_chart_image:'https://via.placeholder.com/150' },
+    { _id: 'sku456', vendor_sku: 'HD-SKU-002', product_name: 'Hardcoded Product Beta (已加载)', status: '0', category: 'Books', dropship_price: '19.50', ats: 5, upc: '234567890123', allow_dropship_return: false, shipping_lead_time: 5, country_of_origin: 'USA', title: 'Beta Product', short_desc: 'This is Beta', long_desc: 'This is a detailed description for Beta.', keywords: 'beta,test,product', key_features_1: 'Feature B1', key_features_2: 'Feature B2', key_features_3: 'Feature B3', key_features_4: 'Feature B4', key_features_5: 'Feature B5', main_image:'https://via.placeholder.com/150', front_image:'https://via.placeholder.com/150', back_image:'https://via.placeholder.com/150', side_image:'https://via.placeholder.com/150', detail_image:'https://via.placeholder.com/150', full_image:'https://via.placeholder.com/150', thumbnail_image:'https://via.placeholder.com/150', size_chart_image:'https://via.placeholder.com/150' },
+    { _id: 'sku789', vendor_sku: 'HD-SKU-003', product_name: 'Hardcoded Product Gamma (已加载)', status: '1', category: 'Home Goods', dropship_price: '45.00', ats: 20, upc: '345678901234', allow_dropship_return: true, shipping_lead_time: 2, country_of_origin: 'Vietnam', title: 'Gamma Product', short_desc: 'This is Gamma', long_desc: 'This is a detailed description for Gamma.', keywords: 'gamma,test,product', key_features_1: 'Feature G1', key_features_2: 'Feature G2', key_features_3: 'Feature G3', key_features_4: 'Feature G4', key_features_5: 'Feature G5', main_image:'https://via.placeholder.com/150', front_image:'https://via.placeholder.com/150', back_image:'https://via.placeholder.com/150', side_image:'https://via.placeholder.com/150', detail_image:'https://via.placeholder.com/150', full_image:'https://via.placeholder.com/150', thumbnail_image:'https://via.placeholder.com/150', size_chart_image:'https://via.placeholder.com/150' },
+  ]);
 };
-
-const showNotification = (type, title, content) => {
-  notification[type]({
-    message: title,
-    description: content,
-    placement: 'topRight',
-    duration: 4.5,
-  });
-  if (type === 'success') {
-    message.success(`${title}: ${content}`);
-  } else if (type === 'error') {
-    message.error(`${title}: ${content}`);
-  } else if (type === 'warning') {
-    message.warning(`${title}: ${content}`);
-  }
+const createSKU = async (data) => {
+  console.log('MOCK API: createSKU called with:', data);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return Promise.resolve({ _id: `new_${Date.now()}`, ...data });
 };
+const updateSKU = async (id, data) => {
+  console.log('MOCK API: updateSKU called for id:', id, 'with:', data);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return Promise.resolve({ _id: id, ...data });
+};
+// import { fetchSKUs, createSKU, updateSKU } from '../api/sku'; // 使用您真实的API
 
-// 示例SKU数据
-const sampleSkusData = [
-  {
-    id: 'sample-1',
-    sku: 'SKU001',
-    name: '产品A (示例)',
-    goodsValue: 120.50,
-    gMax: 1000,
-    packageType: '标准箱',
-    capacity: 500,
-    capacityUnit: 'ml',
-    code: 'PCODE001',
-    gMin: 50,
-    gw: 1.2,
-    height: 20,
-    length: 30,
-    vol: 0.018,
-    width: 15,
-  },
-  {
-    id: 'sample-2',
-    sku: 'SKU002',
-    name: '产品B (超长名称示例用于测试换行和显示效果)',
-    goodsValue: 75.00,
-    gMax: 500,
-    packageType: '独立包装',
-    capacity: 2,
-    capacityUnit: 'L',
-    code: 'PCODE002',
-    gMin: 20,
-    gw: 2.5,
-    height: 25,
-    length: 40,
-    vol: 0.03,
-    width: 30,
-  },
-  {
-    id: 'sample-3',
-    sku: 'SKU003',
-    name: '产品C (部分字段为空)',
-    goodsValue: 210.75,
-    gMax: null, // 示例空值
-    packageType: '袋装',
-    capacity: 750,
-    capacityUnit: 'g',
-    code: '', // 示例空字符串
-    gMin: 10,
-    gw: 0.8,
-    height: 15,
-    length: 20,
-    vol: 0.009,
-    width: 10,
-  },
-];
-
+import {
+  Button,
+  Typography,
+  Box,
+  CircularProgress,
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 
 const SKUPage = () => {
-  const [skus, setSkus] = useState([]); // 初始化为空数组
+  const [skus, setSkus] = useState([]);
   const [editingSku, setEditingSku] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [skuToDelete, setSkuToDelete] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [pageError, setPageError] = useState(null);
+  const [formErrorInDialog, setFormErrorInDialog] = useState(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const formId = "sku-dialog-form";
 
-  const loadData = async () => {
-    console.log("Attempting to load data...");
-    // ** START: 修改为使用示例数据 **
-    // 为了演示，我们直接设置示例数据
-    // 在实际应用中，您应该移除这行，并取消下方API调用的注释
-    setSkus(sampleSkusData); 
-    console.log("Loaded sample SKU data for display.");
-
-    // 实际API调用 (当前被注释掉)
-    /*
+  const loadSKUs = async () => {
+    setPageLoading(true);
+    setPageError(null);
     try {
-      const response = await getAllSkus();
-      console.log("Load data response:", response);
-      setSkus(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('加载 SKU 数据失败 (捕获于 loadData):', error.response || error.request || error.message);
-      showNotification('error', '加载数据失败', formatErrorMessage(error));
-      setSkus([]); // 确保出错时 skus 仍为数组
+      const data = await fetchSKUs();
+      setSkus(data || []);
+    } catch (err) {
+      const errorMessage = 'Failed to fetch SKUs: ' + (err.response?.data?.message || err.message);
+      setPageError(errorMessage);
+      console.error('Error fetching SKUs:', err);
+    } finally {
+      setPageLoading(false);
     }
-    */
-    // ** END: 修改为使用示例数据 **
   };
 
   useEffect(() => {
-    loadData();
+    loadSKUs();
   }, []);
 
-  const handleSave = async (formData) => {
-    console.log('[handleSave] Initiated with formData:', formData);
-    // 暂时禁用保存逻辑，因为我们在使用示例数据
-    showNotification('info', '操作提示', '当前为示例数据显示，保存功能未执行。');
-    setIsModalOpen(false);
+  const handleOpenCreateDialog = () => {
     setEditingSku(null);
-    // 如果需要，可以在这里重新加载示例数据或API数据
-    // loadData(); 
-    return; 
-
-    // 以下是原始保存逻辑
-    /*
-    try {
-      if (editingSku) {
-        // ... (省略更新逻辑)
-      } else {
-        // ... (省略创建逻辑)
-      }
-      setIsModalOpen(false);
-      setEditingSku(null);
-      loadData(); 
-    } catch (err) {
-      // ... (省略错误处理)
-    }
-    */
+    setFormErrorInDialog(null);
+    setIsDialogOpen(true);
   };
 
-  const handleEdit = (sku) => {
-     // 如果是示例数据，我们可能没有完整的后端ID
-    console.log("Editing SKU (sample data):", sku);
+  const handleOpenEditDialog = (sku) => {
     setEditingSku(sku);
-    setIsModalOpen(true);
+    setFormErrorInDialog(null);
+    setIsDialogOpen(true);
   };
 
-  const handleDelete = (id) => {
-    console.log("Attempting to delete SKU ID (sample data):", id);
-    // 暂时禁用删除逻辑
-    showNotification('info', '操作提示', `当前为示例数据显示，删除功能未执行 (ID: ${id})。`);
-    // setSkuToDelete(id);
-    // setIsConfirmOpen(true);
+  const handleDialogClose = () => {
+    if (submitLoading) return;
+    setIsDialogOpen(false);
+    setEditingSku(null);
+    setFormErrorInDialog(null);
   };
 
-
-  const confirmDelete = async () => {
-    console.log('[confirmDelete] Attempting to delete SKU ID:', skuToDelete);
-    // 暂时禁用
-    setIsConfirmOpen(false);
-    setSkuToDelete(null);
-    return;
-    /*
-    if (skuToDelete) {
-      try {
-        await deleteSku(skuToDelete);
-        showNotification('success', '删除成功', 'SKU 已成功删除');
-        loadData();
-      } catch (error) {
-        console.error('[confirmDelete] Delete failed:', error.response || error.request || error.message);
-        showNotification('error', '删除失败', formatErrorMessage(error));
+  const handleActualFormSubmit = async (skuData) => {
+    setSubmitLoading(true);
+    setFormErrorInDialog(null);
+    try {
+      if (editingSku && (editingSku._id || editingSku.vendor_sku)) {
+        await updateSKU(editingSku._id || editingSku.vendor_sku, skuData);
+      } else {
+        await createSKU(skuData);
       }
-    }
-    setIsConfirmOpen(false);
-    setSkuToDelete(null);
-    */
-  };
-
-  const cancelDelete = () => {
-    setIsConfirmOpen(false);
-    setSkuToDelete(null);
-  };
-
-  const handleFileChange = (info) => {
-    if (info.fileList && info.fileList.length > 0) {
-      const latestFile = info.fileList[info.fileList.length - 1].originFileObj;
-      if (latestFile && latestFile.type === 'text/csv') {
-        setSelectedFile(latestFile);
-        message.success(`${latestFile.name} 文件已选择，请点击确认上传`);
-      } else if (latestFile) {
-        showNotification('warning', '文件类型错误', '请选择 CSV 格式的文件！');
-        setSelectedFile(null);
-      }
-    } else {
-      setSelectedFile(null);
+      await loadSKUs();
+      handleDialogClose();
+    } catch (err) {
+      const errorMessage = 'Failed to save SKU: ' + (err.response?.data?.message || err.message);
+      setFormErrorInDialog(errorMessage);
+      console.error('Error saving SKU:', err);
+    } finally {
+      setSubmitLoading(false);
     }
   };
-
-  const handleConfirmUpload = async () => {
-    if (!selectedFile) {
-      showNotification('warning', '提示', '请先选择一个 CSV 文件！');
-      return;
-    }
-    // 暂时禁用上传逻辑
-    setUploading(true);
-    showNotification('info', '操作提示', '当前为示例数据显示，上传功能未执行。');
-    setTimeout(() => {
-        setUploading(false);
-        setSelectedFile(null);
-    }, 1500);
-    return;
-    /*
-    setUploading(true);
-    // ... (省略上传逻辑)
-    */
-  };
-
-  const filteredSkus = skus.filter(sku =>
-    (sku.sku && String(sku.sku).toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (sku.name && String(sku.name).toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   return (
-    <div
-      style={{
-        background: 'white',
-        padding: 24,
-        borderRadius: 8,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        minWidth: 720, // 确保有足够宽度展示
-        maxWidth: '90%', // 允许更宽的视图
-        margin: '40px auto',
-      }}>
-      <Space style={{ marginBottom: 16, width: '100%', display: 'flex', justifyContent: 'space-between' }} wrap>
-        <Button
-          type="primary"
-          onClick={() => {
-            setEditingSku(null);
-            setIsModalOpen(true);
-          }}>
-          新增 SKU
-        </Button>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        SKU Management
+      </Typography>
 
-        <Space>
-          <Upload
-            name="file"
-            accept=".csv"
-            beforeUpload={() => false}
-            onChange={handleFileChange}
-            showUploadList={false}
-          >
-            <Button icon={<UploadOutlined />}>
-              选择 CSV 文件
-            </Button>
-          </Upload>
+      {pageError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPageError(null)}>{pageError}</Alert>}
 
-          {selectedFile && (
-            <Space>
-               <Tooltip title={selectedFile.name}>
-                 <span style={{ marginLeft: 8, color: '#52c41a', display: 'inline-block', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}>
-                    <CheckCircleOutlined style={{ marginRight: 4 }}/>
-                    {selectedFile.name}
-                 </span>
-               </Tooltip>
-              <Button
-                type="primary"
-                onClick={handleConfirmUpload}
-                loading={uploading}
-                icon={<CheckCircleOutlined />}
-              >
-                确认上传
-              </Button>
-              <Button
-                 icon={<CloseCircleOutlined />}
-                 onClick={() => setSelectedFile(null)}
-                 danger
-                 type="text"
-              />
-            </Space>
-          )}
-        </Space>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<AddIcon />}
+        onClick={handleOpenCreateDialog}
+        sx={{ mb: 2 }}
+        disabled={pageLoading && !skus.length} // 当列表为空且在加载时禁用，或一直可用
+      >
+        Create New SKU
+      </Button>
 
-        <Input
-          placeholder="搜索 SKU 编码或名称"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          style={{ width: 300 }}
-          allowClear
-        />
-      </Space>
+      {pageLoading && skus.length === 0 && <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />}
 
-      <SKUList skus={filteredSkus} onEdit={handleEdit} onDelete={handleDelete} />
+      <SKUList
+        skus={skus}
+        onEdit={handleOpenEditDialog}
+        // onDelete={handleDeleteAttempt} // 如果您有删除功能，请取消注释并实现
+        loading={pageLoading && skus.length === 0}
+      />
 
-      <SKUForm
-        open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setEditingSku(null);
+      <Dialog
+        open={isDialogOpen}
+        onClose={(event, reason) => {
+            if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+                if (submitLoading) return; // 提交时阻止背景点击或ESC关闭
+            }
+            handleDialogClose();
         }}
-        onSubmit={handleSave}
-        initialValues={editingSku}
-      />
-
-      <ConfirmDialog
-        open={isConfirmOpen}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
-    </div>
+        disableEscapeKeyDown={submitLoading} // 提交时禁用ESC键关闭
+        maxWidth="md" // 设置为 'md' 以便每行一个字段时有足够的宽度，但不过宽。如果内容过多可尝试 "lg"
+        fullWidth
+      >
+        <DialogTitle>
+          {editingSku ? 'Edit SKU' : 'Create New SKU'}
+          <IconButton
+            aria-label="close"
+            onClick={handleDialogClose}
+            disabled={submitLoading}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {formErrorInDialog && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormErrorInDialog(null)}>{formErrorInDialog}</Alert>}
+          <SKUFormComponent
+            // key 用于在 editingSku 变化时强制重新渲染 SKUForm 并重置其内部状态
+            key={editingSku ? `edit-${editingSku._id || editingSku.vendor_sku}` : 'create-new-sku-form-instance'}
+            initialData={editingSku}
+            onSubmit={handleActualFormSubmit}
+            // onCancel={handleDialogClose} // SKUForm 内部不再需要取消按钮
+            formId={formId}
+            isSubmitting={submitLoading}
+          />
+        </DialogContent>
+        <DialogActions sx={{p: '16px 24px'}}>
+          <Button onClick={handleDialogClose} variant="outlined" disabled={submitLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit" // 触发表单的 onSubmit
+            form={formId}   // 关联到 SKUForm 内部的 form 元素
+            disabled={submitLoading} // 在提交过程中禁用按钮
+          >
+            {editingSku ? 'Save Changes' : 'Create SKU'}
+            {submitLoading && <CircularProgress size={24} sx={{position: 'absolute', top: '50%', left: '50%', marginTop: '-12px', marginLeft: '-12px'}}/>}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
