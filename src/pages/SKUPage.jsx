@@ -1,7 +1,9 @@
+// src/pages/SKUPage.jsx
 import React, { useState, useEffect } from 'react';
 // 确保 SKUFormComponent 和 SKUList 的导入路径与您的项目结构一致
 import SKUFormComponent from '../components/SKUForm'; // 这是 SKUForm.jsx 导出的组件
 import SKUList from '../components/SKUList'; // 您的 SKUList 组件
+import AIDescriptionGeneratorDialog from '../components/AIDescriptionGeneratorDialog'; // 导入新组件
 
 // 确保 API 函数的导入路径与您的项目结构一致
 // 以下为临时模拟 API，请将其替换为您项目中真实的 API 调用
@@ -41,17 +43,19 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'; // AI 图标示例
 
 const SKUPage = () => {
   const [skus, setSkus] = useState([]);
   const [editingSku, setEditingSku] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSkuFormDialogOpen, setIsSkuFormDialogOpen] = useState(false); // Renamed for clarity
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false); // State for AI Dialog
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState(null);
   const [formErrorInDialog, setFormErrorInDialog] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  const formId = "sku-dialog-form";
+  const skuFormId = "sku-dialog-form"; // ID for the main SKU form
 
   const loadSKUs = async () => {
     setPageLoading(true);
@@ -72,26 +76,26 @@ const SKUPage = () => {
     loadSKUs();
   }, []);
 
-  const handleOpenCreateDialog = () => {
+  const handleOpenCreateSkuDialog = () => {
     setEditingSku(null);
     setFormErrorInDialog(null);
-    setIsDialogOpen(true);
+    setIsSkuFormDialogOpen(true);
   };
 
-  const handleOpenEditDialog = (sku) => {
+  const handleOpenEditSkuDialog = (sku) => {
     setEditingSku(sku);
     setFormErrorInDialog(null);
-    setIsDialogOpen(true);
+    setIsSkuFormDialogOpen(true);
   };
 
-  const handleDialogClose = () => {
+  const handleSkuFormDialogClose = () => {
     if (submitLoading) return;
-    setIsDialogOpen(false);
+    setIsSkuFormDialogOpen(false);
     setEditingSku(null);
     setFormErrorInDialog(null);
   };
 
-  const handleActualFormSubmit = async (skuData) => {
+  const handleActualSkuFormSubmit = async (skuData) => {
     setSubmitLoading(true);
     setFormErrorInDialog(null);
     try {
@@ -101,7 +105,7 @@ const SKUPage = () => {
         await createSKU(skuData);
       }
       await loadSKUs();
-      handleDialogClose();
+      handleSkuFormDialogClose();
     } catch (err) {
       const errorMessage = 'Failed to save SKU: ' + (err.response?.data?.message || err.message);
       setFormErrorInDialog(errorMessage);
@@ -109,6 +113,15 @@ const SKUPage = () => {
     } finally {
       setSubmitLoading(false);
     }
+  };
+
+  // Handlers for AI Description Dialog
+  const handleOpenAiDialog = () => {
+    setIsAiDialogOpen(true);
+  };
+
+  const handleCloseAiDialog = () => {
+    setIsAiDialogOpen(false);
   };
 
   return (
@@ -119,43 +132,55 @@ const SKUPage = () => {
 
       {pageError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPageError(null)}>{pageError}</Alert>}
 
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={handleOpenCreateDialog}
-        sx={{ mb: 2 }}
-        disabled={pageLoading && !skus.length} // 当列表为空且在加载时禁用，或一直可用
-      >
-        Create New SKU
-      </Button>
+      {/* Buttons Container */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={handleOpenCreateSkuDialog}
+          disabled={pageLoading && !skus.length}
+        >
+          Create New SKU
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          startIcon={<AutoFixHighIcon />}
+          onClick={handleOpenAiDialog} // Click handler for AI Dialog
+        >
+          AI 生成描述
+        </Button>
+      </Box>
+
 
       {pageLoading && skus.length === 0 && <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />}
 
       <SKUList
         skus={skus}
-        onEdit={handleOpenEditDialog}
+        onEdit={handleOpenEditSkuDialog}
         // onDelete={handleDeleteAttempt} // 如果您有删除功能，请取消注释并实现
         loading={pageLoading && skus.length === 0}
       />
 
+      {/* Main SKU Form Dialog */}
       <Dialog
-        open={isDialogOpen}
+        open={isSkuFormDialogOpen}
         onClose={(event, reason) => {
             if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
-                if (submitLoading) return; // 提交时阻止背景点击或ESC关闭
+                if (submitLoading) return; 
             }
-            handleDialogClose();
+            handleSkuFormDialogClose();
         }}
-        disableEscapeKeyDown={submitLoading} // 提交时禁用ESC键关闭
-        maxWidth="md" // 设置为 'md' 以便每行一个字段时有足够的宽度，但不过宽。如果内容过多可尝试 "lg"
+        disableEscapeKeyDown={submitLoading}
+        maxWidth="md" 
         fullWidth
       >
         <DialogTitle>
           {editingSku ? 'Edit SKU' : 'Create New SKU'}
           <IconButton
             aria-label="close"
-            onClick={handleDialogClose}
+            onClick={handleSkuFormDialogClose}
             disabled={submitLoading}
             sx={{
               position: 'absolute',
@@ -170,31 +195,35 @@ const SKUPage = () => {
         <DialogContent dividers>
           {formErrorInDialog && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormErrorInDialog(null)}>{formErrorInDialog}</Alert>}
           <SKUFormComponent
-            // key 用于在 editingSku 变化时强制重新渲染 SKUForm 并重置其内部状态
             key={editingSku ? `edit-${editingSku._id || editingSku.vendor_sku}` : 'create-new-sku-form-instance'}
             initialData={editingSku}
-            onSubmit={handleActualFormSubmit}
-            // onCancel={handleDialogClose} // SKUForm 内部不再需要取消按钮
-            formId={formId}
+            onSubmit={handleActualSkuFormSubmit}
+            formId={skuFormId}
             isSubmitting={submitLoading}
           />
         </DialogContent>
         <DialogActions sx={{p: '16px 24px'}}>
-          <Button onClick={handleDialogClose} variant="outlined" disabled={submitLoading}>
+          <Button onClick={handleSkuFormDialogClose} variant="outlined" disabled={submitLoading}>
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
-            type="submit" // 触发表单的 onSubmit
-            form={formId}   // 关联到 SKUForm 内部的 form 元素
-            disabled={submitLoading} // 在提交过程中禁用按钮
+            type="submit" 
+            form={skuFormId}  
+            disabled={submitLoading} 
           >
             {editingSku ? 'Save Changes' : 'Create SKU'}
             {submitLoading && <CircularProgress size={24} sx={{position: 'absolute', top: '50%', left: '50%', marginTop: '-12px', marginLeft: '-12px'}}/>}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* AI Description Generator Dialog */}
+      <AIDescriptionGeneratorDialog
+        open={isAiDialogOpen}
+        onClose={handleCloseAiDialog}
+      />
     </Box>
   );
 };
