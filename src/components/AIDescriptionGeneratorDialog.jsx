@@ -24,7 +24,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
     category: '',
     color: '',
     size: '',
-    target_audience: '',
+    target_people: '', // <--- 更新: target_audience 更改为 target_people
   });
   const [generatedDescription, setGeneratedDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
         category: '',
         color: '',
         size: '',
-        target_audience: '',
+        target_people: '', // <--- 更新: target_audience 更改为 target_people
       });
       setGeneratedDescription('');
       setError('');
@@ -59,13 +59,14 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
     setError('');
     setGeneratedDescription('');
 
+    // 构建与后端 payload 结构一致的对象
     const productInfoForAPI = {
-      productName: formData.product_name,
+      product_name: formData.product_name, // <--- 更新: 直接使用 product_name
       brand: formData.brand,
       category: formData.category,
       color: formData.color,
       size: formData.size,
-      targetAudience: formData.target_audience,
+      target_people: formData.target_people, // <--- 更新: 直接使用 target_people
     };
 
     try {
@@ -170,8 +171,8 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             <Grid item xs={12}>
               <TextField
                 label="目标用户/风格 (Target Audience/Style)"
-                name="target_audience"
-                value={formData.target_audience}
+                name="target_people" // <--- 更新: name 属性更改为 target_people
+                value={formData.target_people} // <--- 更新: value 绑定到 formData.target_people
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
