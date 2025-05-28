@@ -24,7 +24,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
     category: '',
     color: '',
     size: '',
-    target_people: '', // <--- 更新: target_audience 更改为 target_people
+    target_people: '', // <--- 状态键名已更新
   });
   const [generatedDescription, setGeneratedDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
         category: '',
         color: '',
         size: '',
-        target_people: '', // <--- 更新: target_audience 更改为 target_people
+        target_people: '', // <--- 状态键名已更新
       });
       setGeneratedDescription('');
       setError('');
@@ -59,28 +59,27 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
     setError('');
     setGeneratedDescription('');
 
-    // 构建与后端 payload 结构一致的对象
     const productInfoForAPI = {
-      product_name: formData.product_name, // <--- 更新: 直接使用 product_name
+      product_name: formData.product_name,
       brand: formData.brand,
       category: formData.category,
       color: formData.color,
       size: formData.size,
-      target_people: formData.target_people, // <--- 更新: 直接使用 target_people
+      target_people: formData.target_people,
     };
 
     try {
       const result = await fetchAIDescription(productInfoForAPI);
       if (result.error) {
-        setError(result.error);
+        setError(result.error); // 错误信息可能来自API，可能是英文或中文
         setGeneratedDescription('');
       } else {
-        setGeneratedDescription(result.description || '未能生成描述。');
+        setGeneratedDescription(result.description || 'Failed to generate description.'); // 英文默认信息
       }
     } catch (apiError) {
-      const message = apiError.message || '调用AI服务时发生未知错误。';
+      const message = apiError.message || 'An unknown error occurred while calling the AI service.'; // 英文错误信息
       setError(message);
-      setGeneratedDescription(`生成出错: ${message}`);
+      setGeneratedDescription(`Error generating description: ${message}`); // 英文错误信息
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +93,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
   return (
     <Dialog open={open} onClose={handleCloseDialog} maxWidth="md" fullWidth>
       <DialogTitle>
-        AI 辅助生成产品描述
+        AI Assisted Product Description Generation {/* 英文标题 */}
         <IconButton
           aria-label="close"
           onClick={handleCloseDialog}
@@ -114,7 +113,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
           <Grid container spacing={2} direction="column">
             <Grid item xs={12}>
               <TextField
-                label="产品名称 (Product Name)"
+                label="Product Name" // 英文标签
                 name="product_name"
                 value={formData.product_name}
                 onChange={handleChange}
@@ -126,7 +125,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="品牌 (Brand)"
+                label="Brand" // 英文标签
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
@@ -137,7 +136,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="品类 (Category)"
+                label="Category" // 英文标签
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
@@ -148,7 +147,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="颜色 (Color)"
+                label="Color" // 英文标签
                 name="color"
                 value={formData.color}
                 onChange={handleChange}
@@ -159,7 +158,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="尺寸 (Size)"
+                label="Size" // 英文标签
                 name="size"
                 value={formData.size}
                 onChange={handleChange}
@@ -170,13 +169,13 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="目标用户/风格 (Target Audience/Style)"
-                name="target_people" // <--- 更新: name 属性更改为 target_people
-                value={formData.target_people} // <--- 更新: value 绑定到 formData.target_people
+                label="Target Audience/Style" // 英文标签
+                name="target_people"
+                value={formData.target_people}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
-                helperText="例如: 年轻人, 商务人士, 户外爱好者"
+                helperText="e.g., young adults, business professionals, outdoor enthusiasts" // 英文辅助文本
                 disabled={isLoading}
               />
             </Grid>
@@ -189,7 +188,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
                 disabled={isLoading || !formData.product_name}
                 sx={{ minWidth: 150 }}
               >
-                {isLoading ? <CircularProgress size={24} color="inherit" /> : '生成描述'}
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Generate Description'} {/* 英文按钮文本 */}
               </Button>
             </Grid>
 
@@ -202,7 +201,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
             {generatedDescription && !error && (
               <Grid item xs={12}>
                 <Typography variant="subtitle1" gutterBottom sx={{ mt: 1, fontWeight: 'bold' }}>
-                  AI 生成的描述:
+                  AI Generated Description: {/* 英文文本 */}
                 </Typography>
                 <TextField
                   value={generatedDescription}
@@ -220,7 +219,7 @@ const AIDescriptionGeneratorDialog = ({ open, onClose }) => {
       </DialogContent>
       <DialogActions sx={{ p: '16px 24px' }}>
         <Button onClick={handleCloseDialog} color="primary" variant="outlined" disabled={isLoading}>
-          关闭
+          Close {/* 英文按钮文本 */}
         </Button>
       </DialogActions>
     </Dialog>
